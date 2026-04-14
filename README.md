@@ -145,3 +145,26 @@ Example consumers:
 ## Overview
 
 This architecture goes beyond basic CRUD storage by emphasizing synchronization, deduplication, and event-driven design for a production-ready system.
+
+## Current Implementation Status
+
+This repository now includes a Spring Boot starter implementation for MVP APIs:
+- `POST /api/upload/init`
+- `POST /api/upload/complete`
+- `GET /api/files?userId=<userId>`
+- `GET /api/files/{fileId}/download`
+- `POST /api/shares`
+
+> Note: current storage is in-memory for development. S3/MinIO, Redis, and Kafka integrations are planned next.
+
+## Local Run
+
+```bash
+mvn spring-boot:run
+```
+
+## Run Tests
+
+```bash
+mvn test
+```
