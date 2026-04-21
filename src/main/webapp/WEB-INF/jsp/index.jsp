@@ -1,55 +1,208 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <title>DropBox File Storage - Demo UI</title>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <style>
-        body { font-family: Arial, sans-serif; margin: 24px; }
-        .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-        input, button { padding: 8px; margin: 4px 0; }
-        input { width: 320px; max-width: 100%; }
-        pre { background: #f7f7f7; padding: 12px; overflow: auto; }
+        :root {
+            --bg: #0f172a;
+            --panel: #111827;
+            --panel-soft: #1f2937;
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --primary: #22d3ee;
+            --primary-2: #3b82f6;
+            --success: #22c55e;
+            --border: #374151;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Inter, Segoe UI, Arial, sans-serif;
+            color: var(--text);
+            background: radial-gradient(1200px 600px at 10% -20%, #1d4ed8 0%, rgba(29,78,216,0) 60%),
+                        radial-gradient(1000px 500px at 110% 0%, #0891b2 0%, rgba(8,145,178,0) 50%),
+                        var(--bg);
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 20px 56px;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, rgba(34,211,238,.16), rgba(59,130,246,.16));
+            border: 1px solid rgba(148,163,184,.22);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 18px;
+            backdrop-filter: blur(4px);
+        }
+
+        .hero h1 { margin: 0 0 8px; font-size: 28px; }
+        .hero p { margin: 0; color: var(--muted); }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 14px;
+        }
+
+        .card {
+            background: linear-gradient(180deg, rgba(31,41,55,.95), rgba(17,24,39,.95));
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,.25);
+        }
+
+        .card h3 {
+            margin: 0 0 12px;
+            font-size: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        input {
+            width: 100%;
+            background: var(--panel-soft);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(34,211,238,.15);
+        }
+
+        button {
+            width: 100%;
+            border: none;
+            border-radius: 10px;
+            color: #0b1220;
+            font-weight: 700;
+            padding: 10px 12px;
+            cursor: pointer;
+            background: linear-gradient(90deg, var(--primary), var(--primary-2));
+        }
+
+        button:hover { filter: brightness(1.05); }
+
+        .response {
+            margin-top: 14px;
+            background: #020617;
+            border: 1px solid #1e293b;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .response-head {
+            padding: 10px 14px;
+            background: rgba(15,23,42,.8);
+            border-bottom: 1px solid #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .badge {
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: rgba(34,197,94,.18);
+            border: 1px solid rgba(34,197,94,.35);
+            color: #86efac;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        pre {
+            margin: 0;
+            max-height: 260px;
+            overflow: auto;
+            padding: 14px;
+            color: #d1fae5;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
-<h1>DropBox File Storage - Basic JSP UI</h1>
+<div class="container">
+    <section class="hero">
+        <h1>DropBox File Storage • Demo Console</h1>
+        <p>Use this interface to test upload initialization/completion, download URL generation, and share links.</p>
+    </section>
 
-<div class="card">
-    <h3>Upload Init</h3>
-    <input id="initUserId" placeholder="userId" value="user-1"/><br/>
-    <input id="initFileName" placeholder="fileName" value="demo.txt"/><br/>
-    <input id="initSize" type="number" placeholder="size" value="1024"/><br/>
-    <input id="initChunk" type="number" placeholder="chunkSizeBytes" value="256"/><br/>
-    <button onclick="uploadInit()">Call /api/upload/init</button>
+    <section class="grid">
+        <div class="card">
+            <h3>1) Upload Init</h3>
+            <label>User ID</label>
+            <input id="initUserId" placeholder="userId" value="user-1"/>
+            <label>File Name</label>
+            <input id="initFileName" placeholder="fileName" value="demo.txt"/>
+            <label>File Size (bytes)</label>
+            <input id="initSize" type="number" placeholder="size" value="1024"/>
+            <label>Chunk Size (bytes)</label>
+            <input id="initChunk" type="number" placeholder="chunkSizeBytes" value="256"/>
+            <button onclick="uploadInit()">POST /api/upload/init</button>
+        </div>
+
+        <div class="card">
+            <h3>2) Upload Complete</h3>
+            <label>Session ID</label>
+            <input id="completeSessionId" placeholder="sessionId"/>
+            <label>Checksum</label>
+            <input id="completeChecksum" placeholder="checksum" value="abc123"/>
+            <label>File Path</label>
+            <input id="completePath" placeholder="path" value="user-1/root/demo.txt"/>
+            <label>ETags (comma-separated)</label>
+            <input id="completeEtags" placeholder="e1,e2,e3,e4" value="e1,e2,e3,e4"/>
+            <button onclick="uploadComplete()">POST /api/upload/complete</button>
+        </div>
+
+        <div class="card">
+            <h3>3) Download URL</h3>
+            <label>File ID</label>
+            <input id="downloadFileId" placeholder="fileId"/>
+            <button onclick="downloadUrl()">GET /api/files/{fileId}/download</button>
+        </div>
+
+        <div class="card">
+            <h3>4) Share Link</h3>
+            <label>File ID</label>
+            <input id="shareFileId" placeholder="fileId"/>
+            <label>Owner ID</label>
+            <input id="shareOwnerId" placeholder="ownerId" value="user-1"/>
+            <label>Permission</label>
+            <input id="sharePermission" placeholder="permission" value="read"/>
+            <label>Expiry (seconds)</label>
+            <input id="shareExpiry" type="number" placeholder="expirySeconds" value="3600"/>
+            <button onclick="createShare()">POST /api/shares</button>
+        </div>
+    </section>
+
+    <section class="response">
+        <div class="response-head">
+            <span>API Response</span>
+            <span class="badge">LIVE</span>
+        </div>
+        <pre id="output">No response yet.</pre>
+    </section>
 </div>
-
-<div class="card">
-    <h3>Upload Complete</h3>
-    <input id="completeSessionId" placeholder="sessionId"/><br/>
-    <input id="completeChecksum" placeholder="checksum" value="abc123"/><br/>
-    <input id="completePath" placeholder="path" value="user-1/root/demo.txt"/><br/>
-    <input id="completeEtags" placeholder="etags comma separated" value="e1,e2,e3,e4"/><br/>
-    <button onclick="uploadComplete()">Call /api/upload/complete</button>
-</div>
-
-<div class="card">
-    <h3>Get Download URL</h3>
-    <input id="downloadFileId" placeholder="fileId"/><br/>
-    <button onclick="downloadUrl()">Call /api/files/{fileId}/download</button>
-</div>
-
-<div class="card">
-    <h3>Create Share Link</h3>
-    <input id="shareFileId" placeholder="fileId"/><br/>
-    <input id="shareOwnerId" placeholder="ownerId" value="user-1"/><br/>
-    <input id="sharePermission" placeholder="permission" value="read"/><br/>
-    <input id="shareExpiry" type="number" placeholder="expirySeconds" value="3600"/><br/>
-    <button onclick="createShare()">Call /api/shares</button>
-</div>
-
-<h3>Response</h3>
-<pre id="output">No response yet.</pre>
 
 <script>
     const out = document.getElementById('output');
