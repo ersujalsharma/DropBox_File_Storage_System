@@ -191,6 +191,8 @@ export AWS_DOWNLOAD_URL_TTL_SECONDS=300
 
 > Security: never commit AWS keys into source code or `application.properties`.
 
+If AWS dependencies fail to resolve, verify Maven can access Maven Central and that the project is using the AWS SDK BOM-managed version from `pom.xml`.
+
 ## Run Tests
 
 ```bash
