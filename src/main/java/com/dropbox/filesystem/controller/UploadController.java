@@ -6,6 +6,7 @@ import com.dropbox.filesystem.dto.UploadInitResponse;
 import com.dropbox.filesystem.model.FileMetadata;
 import com.dropbox.filesystem.model.UploadSession;
 import com.dropbox.filesystem.service.UploadService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/upload")
+@Tag(name = "Upload", description = "Upload session lifecycle APIs")
 public class UploadController {
 
     private final UploadService uploadService;

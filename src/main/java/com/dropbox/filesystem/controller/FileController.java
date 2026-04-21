@@ -4,6 +4,7 @@ import com.dropbox.filesystem.dto.DownloadResponse;
 import com.dropbox.filesystem.model.FileMetadata;
 import com.dropbox.filesystem.service.DownloadService;
 import com.dropbox.filesystem.service.FileMetadataService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,6 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/files")
+@Tag(name = "Files", description = "File metadata and download APIs")
 public class FileController {
 
     private final FileMetadataService metadataService;

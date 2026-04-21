@@ -163,6 +163,12 @@ This repository now includes a Spring Boot starter implementation for MVP APIs:
 mvn spring-boot:run
 ```
 
+## API Documentation (Swagger)
+
+After starting the application, open:
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:8080/api-docs`
+
 ## Run Tests
 
 ```bash
