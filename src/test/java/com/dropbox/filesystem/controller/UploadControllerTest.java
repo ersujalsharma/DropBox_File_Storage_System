@@ -3,6 +3,17 @@ package com.dropbox.filesystem.controller;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+
+import com.dropbox.filesystem.service.S3PresignedUrlService;
+import org.springframework.test.web.servlet.MvcResult;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -19,6 +30,13 @@ class UploadControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockBean
+    private S3PresignedUrlService s3PresignedUrlService;
+
+    @Test
+    void initAndCompleteUpload() throws Exception {
+        when(s3PresignedUrlService.generateUploadUrl(anyString())).thenReturn("https://signed-upload.example.com");
 
     @Test
     void initAndCompleteUpload() throws Exception {

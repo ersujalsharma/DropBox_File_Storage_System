@@ -16,6 +16,11 @@ public class UploadService {
 
     private final Map<String, UploadSession> sessions = new ConcurrentHashMap<>();
     private final FileMetadataService metadataService;
+    private final S3PresignedUrlService presignedUrlService;
+
+    public UploadService(FileMetadataService metadataService, S3PresignedUrlService presignedUrlService) {
+        this.metadataService = metadataService;
+        this.presignedUrlService = presignedUrlService;
 
     public UploadService(FileMetadataService metadataService) {
         this.metadataService = metadataService;
@@ -27,6 +32,8 @@ public class UploadService {
         List<String> chunkUrls = new ArrayList<>();
 
         for (int i = 0; i < totalChunks; i++) {
+            String partKey = String.format("uploads/%s/%s/part-%d-%s", userId, sessionId, i, fileName);
+            chunkUrls.add(presignedUrlService.generateUploadUrl(partKey));
             chunkUrls.add("https://storage.example.com/upload/" + sessionId + "/parts/" + i + "?signature=mock");
         }
 

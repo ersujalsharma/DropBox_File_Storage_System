@@ -171,6 +171,26 @@ After starting the application, open:
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
 - OpenAPI JSON: `http://localhost:8080/api-docs`
 
+## AWS S3 Configuration (for real signed URLs)
+
+Set environment variables before running the app:
+
+```bash
+export AWS_ACCESS_KEY_ID=your_access_key
+export AWS_SECRET_ACCESS_KEY=your_secret_key
+export AWS_REGION=us-east-1
+export AWS_S3_BUCKET=your_bucket_name
+```
+
+Optional URL TTL settings:
+
+```bash
+export AWS_UPLOAD_URL_TTL_SECONDS=900
+export AWS_DOWNLOAD_URL_TTL_SECONDS=300
+```
+
+> Security: never commit AWS keys into source code or `application.properties`.
+
 ## Run Tests
 
 ```bash
