@@ -33,6 +33,8 @@
         </dependencies>
     </dependencyManagement>
 
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
