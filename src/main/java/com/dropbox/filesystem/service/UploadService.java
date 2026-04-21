@@ -21,6 +21,9 @@ public class UploadService {
     public UploadService(FileMetadataService metadataService, S3PresignedUrlService presignedUrlService) {
         this.metadataService = metadataService;
         this.presignedUrlService = presignedUrlService;
+
+    public UploadService(FileMetadataService metadataService) {
+        this.metadataService = metadataService;
     }
 
     public UploadSession init(String userId, String fileName, long size, int chunkSizeBytes) {
@@ -31,6 +34,7 @@ public class UploadService {
         for (int i = 0; i < totalChunks; i++) {
             String partKey = String.format("uploads/%s/%s/part-%d-%s", userId, sessionId, i, fileName);
             chunkUrls.add(presignedUrlService.generateUploadUrl(partKey));
+            chunkUrls.add("https://storage.example.com/upload/" + sessionId + "/parts/" + i + "?signature=mock");
         }
 
         UploadSession session = new UploadSession(
