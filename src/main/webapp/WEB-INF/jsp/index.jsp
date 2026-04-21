@@ -29,7 +29,7 @@
         }
 
         .container {
-            max-width: 1100px;
+            max-width: 1150px;
             margin: 0 auto;
             padding: 32px 20px 56px;
         }
@@ -60,6 +60,8 @@
             box-shadow: 0 8px 24px rgba(0,0,0,.25);
         }
 
+        .card.wide { grid-column: 1 / -1; }
+
         .card h3 {
             margin: 0 0 12px;
             font-size: 16px;
@@ -83,6 +85,8 @@
             outline: none;
         }
 
+        input[type="file"] { padding: 9px; }
+
         input:focus {
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(34,211,238,.15);
@@ -99,7 +103,35 @@
             background: linear-gradient(90deg, var(--primary), var(--primary-2));
         }
 
+        .btn-secondary {
+            margin-top: 8px;
+            background: linear-gradient(90deg, #a78bfa, #22d3ee);
+        }
+
         button:hover { filter: brightness(1.05); }
+
+        .hint {
+            margin-top: 8px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .progress-wrap {
+            width: 100%;
+            background: #0b1220;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress {
+            width: 0;
+            height: 10px;
+            background: linear-gradient(90deg, var(--success), #4ade80);
+            transition: width .2s ease;
+        }
 
         .response {
             margin-top: 14px;
@@ -132,7 +164,7 @@
 
         pre {
             margin: 0;
-            max-height: 260px;
+            max-height: 280px;
             overflow: auto;
             padding: 14px;
             color: #d1fae5;
@@ -144,12 +176,27 @@
 <div class="container">
     <section class="hero">
         <h1>DropBox File Storage • Demo Console</h1>
-        <p>Use this interface to test upload initialization/completion, download URL generation, and share links.</p>
+        <p>Upload a real file from browser, split into chunks, PUT each chunk to pre-signed URLs, and then complete upload.</p>
     </section>
 
     <section class="grid">
+        <div class="card wide">
+            <h3>🚀 One-Click File Upload (Chunked)</h3>
+            <label>User ID</label>
+            <input id="autoUserId" placeholder="userId" value="user-1"/>
+            <label>Select File</label>
+            <input id="autoFile" type="file"/>
+            <label>Chunk Size (bytes)</label>
+            <input id="autoChunkSize" type="number" value="5242880"/>
+            <label>Path for Metadata (S3 object key)</label>
+            <input id="autoPath" placeholder="user-1/root/my-file.bin" value="user-1/root/demo.txt"/>
+            <button onclick="uploadFileEndToEnd()">Upload File End-to-End</button>
+            <div class="progress-wrap"><div id="uploadProgress" class="progress"></div></div>
+            <div class="hint">Flow: init → split file → PUT chunks to signed URLs → complete upload. Ensure S3 bucket CORS allows PUT from your frontend origin.</div>
+        </div>
+
         <div class="card">
-            <h3>1) Upload Init</h3>
+            <h3>1) Upload Init (Manual)</h3>
             <label>User ID</label>
             <input id="initUserId" placeholder="userId" value="user-1"/>
             <label>File Name</label>
@@ -162,7 +209,7 @@
         </div>
 
         <div class="card">
-            <h3>2) Upload Complete</h3>
+            <h3>2) Upload Complete (Manual)</h3>
             <label>Session ID</label>
             <input id="completeSessionId" placeholder="sessionId"/>
             <label>Checksum</label>
@@ -206,8 +253,14 @@
 
 <script>
     const out = document.getElementById('output');
+    const progressEl = document.getElementById('uploadProgress');
+
     function print(data) {
         out.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+    }
+
+    function setProgress(percent) {
+        progressEl.style.width = Math.max(0, Math.min(100, percent)) + '%';
     }
 
     async function request(url, options = {}) {
@@ -218,6 +271,79 @@
         const json = await res.json();
         if (!res.ok) throw new Error(JSON.stringify(json));
         return json;
+    }
+
+    async function uploadFileEndToEnd() {
+        try {
+            setProgress(0);
+            const fileInput = document.getElementById('autoFile');
+            const file = fileInput.files[0];
+            if (!file) throw new Error('Please select a file first.');
+
+            const userId = document.getElementById('autoUserId').value;
+            const chunkSizeBytes = Number(document.getElementById('autoChunkSize').value);
+            const path = document.getElementById('autoPath').value || (`${userId}/root/${file.name}`);
+
+            const initBody = {
+                userId,
+                fileName: file.name,
+                size: file.size,
+                chunkSizeBytes
+            };
+
+            const initData = await request('/api/upload/init', {
+                method: 'POST',
+                body: JSON.stringify(initBody)
+            });
+
+            const etags = [];
+            for (let i = 0; i < initData.chunkUrls.length; i++) {
+                const start = i * chunkSizeBytes;
+                const end = Math.min(start + chunkSizeBytes, file.size);
+                const chunk = file.slice(start, end);
+
+                const putRes = await fetch(initData.chunkUrls[i], {
+                    method: 'PUT',
+                    body: chunk
+                });
+
+                if (!putRes.ok) {
+                    throw new Error(`Chunk upload failed at index ${i}: ${putRes.status}`);
+                }
+
+                const etag = putRes.headers.get('ETag') || `etag-${i}`;
+                etags.push(etag.replaceAll('"', ''));
+                setProgress(((i + 1) / initData.chunkUrls.length) * 90);
+            }
+
+            const completeBody = {
+                sessionId: initData.sessionId,
+                checksum: `size-${file.size}`,
+                etags,
+                path
+            };
+
+            const completeData = await request('/api/upload/complete', {
+                method: 'POST',
+                body: JSON.stringify(completeBody)
+            });
+
+            document.getElementById('completeSessionId').value = initData.sessionId;
+            document.getElementById('completePath').value = path;
+            document.getElementById('completeEtags').value = etags.join(',');
+            document.getElementById('downloadFileId').value = completeData.fileId;
+            document.getElementById('shareFileId').value = completeData.fileId;
+            setProgress(100);
+
+            print({
+                message: 'Upload complete',
+                init: initData,
+                complete: completeData,
+                uploadedChunks: etags.length
+            });
+        } catch (e) {
+            print(e.message);
+        }
     }
 
     async function uploadInit() {
