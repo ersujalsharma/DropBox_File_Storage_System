@@ -163,6 +163,8 @@ This repository now includes a Spring Boot starter implementation for MVP APIs:
 mvn spring-boot:run
 ```
 
+DevTools is enabled for local development, so code changes automatically trigger application restart.
+
 ## API Documentation (Swagger)
 
 After starting the application, open:
