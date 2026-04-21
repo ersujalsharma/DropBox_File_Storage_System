@@ -13,9 +13,6 @@ public class DownloadService {
     public DownloadService(FileMetadataService metadataService, S3PresignedUrlService presignedUrlService) {
         this.metadataService = metadataService;
         this.presignedUrlService = presignedUrlService;
-
-    public DownloadService(FileMetadataService metadataService) {
-        this.metadataService = metadataService;
     }
 
     public DownloadResponse signedUrlFor(String fileId) {
@@ -24,8 +21,5 @@ public class DownloadService {
 
         String signedUrl = presignedUrlService.generateDownloadUrl(file.path());
         return new DownloadResponse(file.fileId(), signedUrl, presignedUrlService.downloadExpirySeconds());
-        long expiry = 300;
-        String signedUrl = "https://storage.example.com/download/" + file.fileId() + "?signature=mock";
-        return new DownloadResponse(file.fileId(), signedUrl, expiry);
     }
 }

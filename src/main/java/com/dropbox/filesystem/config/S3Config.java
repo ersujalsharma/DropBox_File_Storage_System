@@ -11,10 +11,21 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 public class S3Config {
 
     @Bean
-    public S3Presigner s3Presigner(@Value("${aws.region}") String region) {
-        return S3Presigner.builder()
-                .credentialsProvider(DefaultCredentialsProvider.create())
-                .region(Region.of(region))
-                .build();
+    public S3Presigner s3Presigner(
+            @Value("${aws.region}") String region,
+            @Value("${aws.credentials.access-key:}") String accessKey,
+            @Value("${aws.credentials.secret-key:}") String secretKey
+    ) {
+        S3Presigner.Builder builder = S3Presigner.builder().region(Region.of(region));
+
+        if (!accessKey.isBlank() && !secretKey.isBlank()) {
+            builder.credentialsProvider(
+                    StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey))
+            );
+        } else {
+            builder.credentialsProvider(DefaultCredentialsProvider.create());
+        }
+
+        return builder.build();
     }
 }

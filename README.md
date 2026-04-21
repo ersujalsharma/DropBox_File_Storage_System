@@ -165,6 +165,18 @@ mvn spring-boot:run
 
 DevTools is enabled for local development, so code changes automatically trigger application restart.
 
+## Basic Frontend (JSP)
+
+A simple JSP UI is available for quick manual testing of APIs:
+- URL: `http://localhost:8080/`
+- File: `src/main/webapp/WEB-INF/jsp/index.jsp`
+
+The page supports:
+- Upload init
+- Upload complete
+- Download URL generation
+- Share link creation
+
 ## API Documentation (Swagger)
 
 After starting the application, open:
@@ -181,6 +193,10 @@ export AWS_SECRET_ACCESS_KEY=your_secret_key
 export AWS_REGION=us-east-1
 export AWS_S3_BUCKET=your_bucket_name
 ```
+
+`application.properties` also maps these keys:
+- `aws.credentials.access-key=${AWS_ACCESS_KEY_ID:}`
+- `aws.credentials.secret-key=${AWS_SECRET_ACCESS_KEY:}`
 
 Optional URL TTL settings:
 
