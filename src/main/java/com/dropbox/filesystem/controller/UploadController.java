@@ -36,7 +36,7 @@ public class UploadController {
                 request.chunkSizeBytes()
         );
 
-        return new UploadInitResponse(session.sessionId(), session.totalChunks(), session.chunkUrls());
+        return new UploadInitResponse(session.sessionId(), session.chunkSizeBytes(), session.totalChunks(), session.chunkUrls());
     }
 
     @PostMapping("/complete")

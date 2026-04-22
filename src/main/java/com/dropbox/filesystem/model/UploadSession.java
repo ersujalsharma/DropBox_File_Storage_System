@@ -8,6 +8,7 @@ public record UploadSession(
         String userId,
         String fileName,
         long size,
+        int chunkSizeBytes,
         int totalChunks,
         List<String> chunkUrls,
         Instant createdAt

@@ -38,6 +38,7 @@ public class UploadService {
                 userId,
                 fileName,
                 size,
+                chunkSizeBytes,
                 totalChunks,
                 chunkUrls,
                 Instant.now()

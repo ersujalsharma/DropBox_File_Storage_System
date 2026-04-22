@@ -172,7 +172,7 @@ A simple JSP UI is available for quick manual testing of APIs:
 - File: `src/main/webapp/WEB-INF/jsp/index.jsp`
 
 The page supports:
-- One-click end-to-end file upload (select file → chunk in browser → upload each chunk to pre-signed URLs → complete)
+- One-click end-to-end file upload (select file → send size/chunk preference to backend → receive signed URLs + chunk size → chunk in browser using server chunk size → upload each chunk → complete)
 - Upload init (manual)
 - Upload complete (manual)
 - Download URL generation

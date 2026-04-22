@@ -189,7 +189,7 @@
             <label>Chunk Size (bytes)</label>
             <input id="autoChunkSize" type="number" value="5242880"/>
             <label>Path for Metadata (S3 object key)</label>
-            <input id="autoPath" placeholder="user-1/root/my-file.bin" value="user-1/root/demo.txt"/>
+            <input id="autoPath" placeholder="user-1/root/my-file.bin" value=""/>
             <button onclick="uploadFileEndToEnd()">Upload File End-to-End</button>
             <div class="progress-wrap"><div id="uploadProgress" class="progress"></div></div>
             <div class="hint">Flow: init → split file → PUT chunks to signed URLs → complete upload. Ensure S3 bucket CORS allows PUT from your frontend origin.</div>
@@ -254,6 +254,14 @@
 <script>
     const out = document.getElementById('output');
     const progressEl = document.getElementById('uploadProgress');
+    const autoFileInput = document.getElementById('autoFile');
+    autoFileInput.addEventListener('change', () => {
+        const selected = autoFileInput.files[0];
+        if (selected && !document.getElementById('autoPath').value.includes('/')) {
+            const userId = document.getElementById('autoUserId').value || 'user-1';
+            document.getElementById('autoPath').value = `${userId}/root/${selected.name}`;
+        }
+    });
 
     function print(data) {
         out.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
@@ -281,14 +289,14 @@
             if (!file) throw new Error('Please select a file first.');
 
             const userId = document.getElementById('autoUserId').value;
-            const chunkSizeBytes = Number(document.getElementById('autoChunkSize').value);
+            const requestedChunkSize = Number(document.getElementById('autoChunkSize').value);
             const path = document.getElementById('autoPath').value || (`${userId}/root/${file.name}`);
 
             const initBody = {
                 userId,
                 fileName: file.name,
                 size: file.size,
-                chunkSizeBytes
+                chunkSizeBytes: requestedChunkSize
             };
 
             const initData = await request('/api/upload/init', {
@@ -296,19 +304,24 @@
                 body: JSON.stringify(initBody)
             });
 
+            const serverChunkSize = Number(initData.chunkSizeBytes) || Math.ceil(file.size / initData.chunkUrls.length);
             const etags = [];
             for (let i = 0; i < initData.chunkUrls.length; i++) {
-                const start = i * chunkSizeBytes;
-                const end = Math.min(start + chunkSizeBytes, file.size);
+                const start = i * serverChunkSize;
+                const end = (i === initData.chunkUrls.length - 1) ? file.size : Math.min(start + serverChunkSize, file.size);
                 const chunk = file.slice(start, end);
 
                 const putRes = await fetch(initData.chunkUrls[i], {
                     method: 'PUT',
+                    headers: {
+                        'Content-Type': file.type || 'application/octet-stream'
+                    },
                     body: chunk
                 });
 
                 if (!putRes.ok) {
-                    throw new Error(`Chunk upload failed at index ${i}: ${putRes.status}`);
+                    const errText = await putRes.text();
+                    throw new Error(`Chunk upload failed at index ${i}: ${putRes.status} ${errText}`);
                 }
 
                 const etag = putRes.headers.get('ETag') || `etag-${i}`;
