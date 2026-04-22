@@ -173,6 +173,7 @@ A simple JSP UI is available for quick manual testing of APIs:
 
 The page supports:
 - One-click end-to-end file upload (select file → send size/chunk preference to backend → receive signed URLs + chunk size → chunk in browser using server chunk size → upload each chunk → complete)
+- Live upload progress bar while chunks are uploading to pre-signed URLs
 - Upload init (manual)
 - Upload complete (manual)
 - Download URL generation

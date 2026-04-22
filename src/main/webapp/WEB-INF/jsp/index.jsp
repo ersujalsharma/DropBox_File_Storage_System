@@ -271,6 +271,32 @@
         progressEl.style.width = Math.max(0, Math.min(100, percent)) + '%';
     }
 
+    function uploadChunkWithProgress(url, chunk, contentType, onProgress) {
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('PUT', url, true);
+            xhr.setRequestHeader('Content-Type', contentType || 'application/octet-stream');
+
+            xhr.upload.onprogress = (event) => {
+                if (event.lengthComputable) {
+                    onProgress(event.loaded);
+                }
+            };
+
+            xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    const etag = xhr.getResponseHeader('ETag') || '';
+                    resolve(etag.replaceAll('"', ''));
+                } else {
+                    reject(new Error(`Chunk upload failed: ${xhr.status} ${xhr.responseText || ''}`));
+                }
+            };
+
+            xhr.onerror = () => reject(new Error('Network error while uploading chunk'));
+            xhr.send(chunk);
+        });
+    }
+
     async function request(url, options = {}) {
         const res = await fetch(url, {
             headers: {'Content-Type': 'application/json'},
@@ -305,29 +331,21 @@
             });
 
             const serverChunkSize = Number(initData.chunkSizeBytes) || Math.ceil(file.size / initData.chunkUrls.length);
-            const etags = [];
-            for (let i = 0; i < initData.chunkUrls.length; i++) {
+            const chunkProgress = new Array(initData.chunkUrls.length).fill(0);
+
+            const uploadPromises = initData.chunkUrls.map((url, i) => {
                 const start = i * serverChunkSize;
                 const end = (i === initData.chunkUrls.length - 1) ? file.size : Math.min(start + serverChunkSize, file.size);
                 const chunk = file.slice(start, end);
 
-                const putRes = await fetch(initData.chunkUrls[i], {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': file.type || 'application/octet-stream'
-                    },
-                    body: chunk
-                });
+                return uploadChunkWithProgress(url, chunk, file.type, (loaded) => {
+                    chunkProgress[i] = loaded;
+                    const uploadedBytes = chunkProgress.reduce((sum, val) => sum + val, 0);
+                    setProgress((uploadedBytes / file.size) * 90);
+                }).then(etag => etag || `etag-${i}`);
+            });
 
-                if (!putRes.ok) {
-                    const errText = await putRes.text();
-                    throw new Error(`Chunk upload failed at index ${i}: ${putRes.status} ${errText}`);
-                }
-
-                const etag = putRes.headers.get('ETag') || `etag-${i}`;
-                etags.push(etag.replaceAll('"', ''));
-                setProgress(((i + 1) / initData.chunkUrls.length) * 90);
-            }
+            const etags = await Promise.all(uploadPromises);
 
             const completeBody = {
                 sessionId: initData.sessionId,
